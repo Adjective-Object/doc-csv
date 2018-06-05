@@ -9,8 +9,14 @@ DOC1=$1
 DOC2=$2
 DIFF_FILE_NAME=$3
 
-TEMP_DIR=$(mktemp -d --tmpdir=`pwd`)
+export TMPDIR=`pwd`
+TEMP_DIR=`mktemp -d -t ''`
 echo "temp dir: $TEMP_DIR";
+
+if [[ "$TEMP_DIR" == "" ]]; then
+	echo "temp dir creation / inference failed??"
+	exit 1
+fi
 
 function unpack_doc () {
     DOC_NAME=$1
