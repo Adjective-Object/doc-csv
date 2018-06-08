@@ -57,6 +57,7 @@ if __name__ == "__main__":
 
     if len(args) != 2:
         print_help()
+        exit()
 
     docx_template_path = args[0]
     output_docx_path = (
