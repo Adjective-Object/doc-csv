@@ -1,4 +1,5 @@
 #!/usr/bin/env python2
+import codecs
 import csv
 from field_values import CheckboxField, DropdownField, TextField
 
@@ -75,7 +76,7 @@ def get_fields_from_file(csvfile):
 
 
 def get_fields(csvfilename):
-    with open(csvfilename, 'rb') as csvfile:
+    with codecs.open(csvfilename, 'rb', encoding='ascii', errors='ignore') as csvfile:
         return get_fields_from_file(csvfile)
 
 if __name__ == "__main__":

@@ -34,7 +34,7 @@ def find_element_following_bookmark(
     """
     label_element = docxml.find(start_selector, namespaces)
     if label_element is None:
-        raise Exception('Could not find name element with val=%s' % name)
+        raise Exception('Could not find name element with val=%s' % start_selector)
 
     current_element = label_element
     while (
