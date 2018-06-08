@@ -23,7 +23,7 @@ def get_attr(element, attr):
     return element.attrib[index]
 
 
-def find_node_following_bookmark(
+def find_element_following_bookmark(
         docxml,
         start_selector,
         check_element_lamdba,
@@ -78,6 +78,13 @@ class Field(object):
         self.field_name = field_name
         self.field_value = field_value
 
+    def __repr__(self):
+        return "%s(%s, %s)" % (
+            type(self).__name__,
+            self.field_name.__repr__(),
+            self.field_value.__repr__()
+            )
+
 
 class TextField(Field):
     def __init__(self, field_name, field_value):
@@ -114,9 +121,31 @@ class TextField(Field):
                 text_input.text = value
                 break
 
+
 class CheckboxField(Field):
     def __init__(self, field_name, field_value):
-        super(CheckboxField, self).__init__(field_name, field_value)
+        super(CheckboxField, self).__init__(
+            field_name,
+            CheckboxField.transform_value(field_value)
+        )
+
+    @staticmethod
+    def validate_value(field_value_string):
+        return CheckboxField.transform_value(field_value_string) is not None
+
+    @staticmethod
+    def transform_value(field_value_string):
+        field_value_lower = field_value_string.lower()
+        is_field_value_truthy = field_value_lower in [
+            'true', '1', 't', 'yes', 'y'
+        ]
+        is_field_value_fasly = field_value_lower in [
+            'false', '0', 'f', 'no', 'n'
+        ]
+        if (not is_field_value_truthy) and (not is_field_value_fasly):
+            return None
+
+        return is_field_value_truthy
 
     def apply(self, docxml):
         CheckboxField.check_checkbox(
@@ -141,7 +170,7 @@ class CheckboxField(Field):
         start_selector = './/w:name[@w:val="%s"]' % name
         checkbox_tag_name = "{%s}checkBox" % namespaces['w']
 
-        checkbox_element = find_next_element_matching(
+        checkbox_element = find_element_following_bookmark(
             docxml,
             start_selector,
             lambda element: element.tag != checkbox_tag_name,
@@ -208,7 +237,7 @@ class DropdownField(Field):
         dropdownlist_element_name = "{%s}ddList" % namespaces['w']
         val_attribute_name = '{%s}val' % namespaces['w']
 
-        dropdown_element = find_next_element_matching(
+        dropdown_element = find_element_following_bookmark(
             docxml,
             start_selector,
             lambda element: element.tag != dropdownlist_element_name,
@@ -235,9 +264,9 @@ class DropdownField(Field):
         result_element.attrib[val_attribute_name] = str(index)
 
 
-if __name__ == "__main__":
-    in_name = 'report_template.docx'
-    out_name = 'report_template_out.docx'
+def set_document_fields(in_name, out_name, fields):
+    # in_name = 'report_template.docx'
+    # out_name = 'report_template_out.docx'
 
     input_zip_file = zipfile.ZipFile(in_name, 'r')
     xml_text = input_zip_file.read('word/document.xml')
@@ -246,9 +275,8 @@ if __name__ == "__main__":
     ET.register_namespace('w', docx_namespace)
     docxml = ET.fromstring(xml_text)
 
-    TextField('Text414', 'hi').apply(docxml)
-    CheckboxField('Check70', False).apply(docxml)
-    DropdownField('Dropdown21', 'NCR(s) closed').apply(docxml)
+    for field in fields:
+        field.apply(docxml)
 
     xml_header = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>'
     xml_body = ET.tostring(docxml)
